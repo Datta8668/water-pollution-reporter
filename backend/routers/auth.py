@@ -93,15 +93,20 @@ def login(user: UserLogin, db: Session = Depends(get_db)):
 
     token_data = {
         "user_id": db_user.id,
-        "role": db_user.role
+       "role": db_user.role
     }
 
     access_token = create_access_token(token_data)
 
     return {
-        "access_token": access_token,
-        "token_type": "bearer"
+    "access_token": access_token,
+    "token_type": "bearer",
+    "user": {
+        "email": db_user.email,
+        "role": db_user.role
     }
+}
+
 
 
 # 🔹 Get Current User (IMPORTANT - used in protected routes)

@@ -26,7 +26,7 @@ class IncidentOut(BaseModel):
     created_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class IncidentUpdate(BaseModel):
     status: Optional[str]

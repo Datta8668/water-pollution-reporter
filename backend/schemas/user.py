@@ -23,7 +23,7 @@ class UserOut(BaseModel):
     zone_id: Optional[int]
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 # For JWT token
 class Token(BaseModel):

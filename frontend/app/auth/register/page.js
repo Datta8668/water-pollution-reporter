@@ -33,7 +33,8 @@ export default function RegisterPage() {
       router.push("/auth/login");
 
     } catch (err) {
-      toast.error(err.response?.data?.detail || "Registration failed");
+      toast.error(err.message || "Registration failed");
+
     }
   };
 

@@ -16,25 +16,31 @@ export default function LoginPage() {
     e.preventDefault();
 
     try {
-      const res = await loginUser({ email, password });
+      // ✅ Send correct data
+      const data = await loginUser({
+        email,
+        password,
+      });
 
-      // Save token & user
-      saveToken(res.access_token);
-      saveUser(res.user);
+      console.log("Login Response:", data);
 
-      toast.success("Login successful!");
-
-      // Redirect based on role
-      const role = res.user.role;
-
-      if (role === "citizen") {
-        router.push("/citizen/dashboard");
-      } else {
-        router.push("/dashboard");
+      // ✅ Save token (if exists)
+      if (data.access_token) {
+        saveToken(data.access_token);
       }
 
+      // ✅ Save user (optional)
+      if (data.user) {
+        saveUser(data.user);
+      }
+
+      toast.success("Login successful!");
+      router.push("/"); // redirect
+
     } catch (err) {
-      toast.error(err.response?.data?.detail || "Login failed");
+      toast.error(
+        err.response?.data?.detail || err.message || "Login failed"
+      );
     }
   };
 
