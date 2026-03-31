@@ -13,36 +13,42 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
 
   const handleLogin = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    try {
-      // ✅ Send correct data
-      const data = await loginUser({
-        email,
-        password,
-      });
+  try {
+    const data = await loginUser({
+      email,
+      password,
+    });
 
-      console.log("Login Response:", data);
+    console.log("Login Response:", data);
 
-      // ✅ Save token (if exists)
-      if (data.access_token) {
-        saveToken(data.access_token);
-      }
-
-      // ✅ Save user (optional)
-      if (data.user) {
-        saveUser(data.user);
-      }
-
-      toast.success("Login successful!");
-      router.push("/"); // redirect
-
-    } catch (err) {
-      toast.error(
-        err.response?.data?.detail || err.message || "Login failed"
-      );
+    //  If no token → stop
+    if (!data.access_token) {
+      throw new Error("Token not received");
     }
-  };
+
+    //  Save token
+    saveToken(data.access_token);
+
+    //  Save user (optional)
+    if (data.user) {
+      saveUser(data.user);
+    }
+
+    toast.success("Login successful!");
+
+    //  Redirect to dashboard (IMPORTANT)
+    router.push("/citizen/dashboard");
+
+  } catch (err) {
+    console.error(err);
+
+    toast.error(
+      err.response?.data?.detail || err.message || "Login failed"
+    );
+  }
+};
 
   return (
     <div style={{ padding: "20px" }}>
