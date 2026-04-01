@@ -8,23 +8,19 @@ from schemas.incident import IncidentCreate, IncidentOut, IncidentUpdate
 from routers.auth import get_current_user
 
 
-# Router
 router = APIRouter(prefix="/incidents", tags=["Incidents"])
 
 
-# 🔹 1. POST /incidents/report (Citizen only)
+# 🔹 1. REPORT INCIDENT
 @router.post("/report", response_model=IncidentOut)
 def report_incident(
     incident: IncidentCreate,
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_user)
+    current_user=Depends(get_current_user)
 ):
-
-    # Only citizen can report
     if current_user.role != "citizen":
         raise HTTPException(status_code=403, detail="Only citizens can report incidents")
 
-    # Create new incident
     new_incident = Incident(
         user_id=current_user.id,
         title=incident.title,
@@ -33,8 +29,8 @@ def report_incident(
         longitude=incident.longitude,
         address=incident.address,
         photo_url=incident.photo_url,
-        pollution_type="unknown",   # ML later
-        severity="low",             # ML later
+        pollution_type="unknown",
+        severity="low",
         status="pending"
     )
 
@@ -45,10 +41,9 @@ def report_incident(
     return new_incident
 
 
-# 🔹 2. GET /incidents/map (Public)
+# 🔹 2. MAP DATA
 @router.get("/map")
 def get_map_data(db: Session = Depends(get_db)):
-
     incidents = db.query(Incident).all()
 
     return [
@@ -64,41 +59,29 @@ def get_map_data(db: Session = Depends(get_db)):
     ]
 
 
-# 🔹 3. GET /incidents/my (Citizen)
+# 🔹 3. MY INCIDENTS
 @router.get("/my", response_model=list[IncidentOut])
 def my_incidents(
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_user)
+    current_user=Depends(get_current_user)
 ):
-
     return db.query(Incident).filter(Incident.user_id == current_user.id).all()
 
 
-# 🔹 4. GET /incidents/{id}
-@router.get("/{id}", response_model=IncidentOut)
-def get_incident(
-    id: int,
-    db: Session = Depends(get_db)
-):
-
-    incident = db.query(Incident).filter(Incident.id == id).first()
-
-    if not incident:
-        raise HTTPException(status_code=404, detail="Incident not found")
-
-    return incident
+# 🔹 4. GET ALL INCIDENTS (🔥 IMPORTANT FIX)
+@router.get("/", response_model=list[IncidentOut])
+def get_all_incidents(db: Session = Depends(get_db)):
+    return db.query(Incident).all()
 
 
-# 🔹 5. PATCH /incidents/{id}/status (Officer/Admin)
+# 🔹 5. UPDATE STATUS
 @router.patch("/{id}/status", response_model=IncidentOut)
 def update_status(
     id: int,
     data: IncidentUpdate,
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_user)
+    current_user=Depends(get_current_user)
 ):
-
-    # Only officer/admin allowed
     if current_user.role not in ["officer", "admin"]:
         raise HTTPException(status_code=403, detail="Not allowed")
 
@@ -107,14 +90,12 @@ def update_status(
     if not incident:
         raise HTTPException(status_code=404, detail="Incident not found")
 
-    # Update fields
     if data.status:
         incident.status = data.status
 
     if data.assigned_officer_id:
         incident.assigned_officer_id = data.assigned_officer_id
 
-    # If resolved → set time
     if data.status == "resolved":
         incident.resolved_at = datetime.utcnow()
 

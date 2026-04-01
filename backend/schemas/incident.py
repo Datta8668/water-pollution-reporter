@@ -28,6 +28,9 @@ class IncidentOut(BaseModel):
     class Config:
         from_attributes = True
 
+
+
+
 class IncidentUpdate(BaseModel):
-    status: Optional[str]
-    assigned_officer_id: Optional[int]
+    status: Optional[str] = None
+    assigned_officer_id: Optional[int] = None

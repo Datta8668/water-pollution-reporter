@@ -2,6 +2,9 @@
 
 import { useState } from "react";
 import { createIncident } from "../../../lib/api";
+import { useRouter } from "next/navigation";
+import { getToken } from "@/utils/auth";
+
 
 export default function ReportPage() {
   const [form, setForm] = useState({
@@ -12,6 +15,16 @@ export default function ReportPage() {
     longitude: "",
     photo_url: "",
   });
+
+  const router = useRouter();
+
+useEffect(() => {
+  const token = getToken();
+
+  if (!token) {
+    router.push("/auth/login");
+  }
+}, []);
 
   // handle input change
   const handleChange = (e) => {

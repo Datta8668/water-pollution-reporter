@@ -23,23 +23,29 @@ export default function LoginPage() {
 
     console.log("Login Response:", data);
 
-    //  If no token → stop
+    // ❌ If no token → stop
     if (!data.access_token) {
       throw new Error("Token not received");
     }
 
-    //  Save token
+    // ✅ Save token
     saveToken(data.access_token);
 
-    //  Save user (optional)
+    // ✅ Save user
     if (data.user) {
       saveUser(data.user);
     }
 
     toast.success("Login successful!");
 
-    //  Redirect to dashboard (IMPORTANT)
-    router.push("/citizen/dashboard");
+    // ✅ ROLE BASED REDIRECT (🔥 IMPORTANT)
+    const role = data.user?.role;
+
+    if (role === "officer" || role === "admin") {
+      router.push("/dashboard"); // government dashboard
+    } else {
+      router.push("/citizen/dashboard"); // citizen dashboard
+    }
 
   } catch (err) {
     console.error(err);
@@ -49,6 +55,7 @@ export default function LoginPage() {
     );
   }
 };
+
 
   return (
     <div style={{ padding: "20px" }}>

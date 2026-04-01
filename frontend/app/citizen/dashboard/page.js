@@ -3,13 +3,30 @@
 import { useEffect, useState } from "react";
 import { getMyIncidents } from "@/lib/api";
 
+
+
 export default function Dashboard() {
   const [incidents, setIncidents] = useState([]);
-  const [mounted, setMounted] = useState(false); // ✅ important
+  const [loading, setLoading] = useState(true);
+
+  const router = useRouter();
+
+useEffect(() => {
+  const token = getToken();
+  const user = getUser();
+
+  if (!token) {
+    router.push("/auth/login");
+    return;
+  }
+
+  // If officer → go to govt dashboard
+  if (user?.role === "officer" || user?.role === "admin") {
+    router.push("/dashboard");
+  }
+}, []);
 
   useEffect(() => {
-    setMounted(true); // ✅ ensures client render only
-
     const loadData = async () => {
       try {
         const data = await getMyIncidents();
@@ -20,51 +37,76 @@ export default function Dashboard() {
         }
       } catch (err) {
         console.error(err);
+      } finally {
+        setLoading(false);
       }
     };
 
     loadData();
   }, []);
 
-  // ✅ prevent hydration mismatch
-  if (!mounted) {
-    return null;
+  // ✅ Show loading (same on server + client → no hydration issue)
+  if (loading) {
+    return <p>Loading...</p>;
   }
 
   const total = incidents.length;
   const pending = incidents.filter(i => i.status === "pending").length;
   const resolved = incidents.filter(i => i.status === "resolved").length;
 
+
+  
   return (
-    <div style={{ padding: "20px" }}>
-      <h1>Citizen Dashboard</h1>
+  <div style={{ padding: "20px" }}>
+    <h1>Citizen Dashboard</h1>
 
-      <h2>Stats</h2>
-      <p>Total Reports: {total}</p>
-      <p>Pending: {pending}</p>
-      <p>Resolved: {resolved}</p>
+    {/* ✅ STAT CARDS */}
+    <div style={{
+      display: "grid",
+      gridTemplateColumns: "repeat(3, 1fr)",
+      gap: "20px",
+      marginTop: "20px"
+    }}>
+      
+      <div style={{ padding: "20px", background: "#e3f2fd", borderRadius: "10px" }}>
+        <h3>Total Reports</h3>
+        <h2>{total}</h2>
+      </div>
 
-      <br />
+      <div style={{ padding: "20px", background: "#fff3cd", borderRadius: "10px" }}>
+        <h3>Pending</h3>
+        <h2>{pending}</h2>
+      </div>
 
-      <h2>My Reports</h2>
+      <div style={{ padding: "20px", background: "#d4edda", borderRadius: "10px" }}>
+        <h3>Resolved</h3>
+        <h2>{resolved}</h2>
+      </div>
 
-      {incidents.length === 0 ? (
-        <p>No reports found</p>
-      ) : (
-        <ul>
-          {incidents.map((item) => (
-            <li key={item.id}>
-              <strong>{item.title}</strong> - {item.status}
-            </li>
-          ))}
-        </ul>
-      )}
-
-      <br />
-
-      <a href="/citizen/report">Report New Incident</a>
-      <br />
-      <a href="/citizen/my-reports">View My Reports</a>
     </div>
-  );
+
+    <br />
+
+    <h2>My Reports</h2>
+
+    {incidents.length === 0 ? (
+      <p>No reports found</p>
+    ) : (
+      <ul>
+        {incidents.map((item) => (
+          <li key={item.id}>
+            <strong>{item.title}</strong> - {item.status}
+          </li>
+        ))}
+      </ul>
+    )}
+
+    <br />
+
+    <a href="/citizen/report">Report New Incident</a>
+    <br />
+    <a href="/citizen/my-reports">View My Reports</a>
+  </div>
+);
+
 }
