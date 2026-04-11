@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { getMyIncidents } from "@/lib/api";
+import { getUser, getToken } from "@/utils/auth";
 
 
 
@@ -11,20 +13,28 @@ export default function Dashboard() {
 
   const router = useRouter();
 
-useEffect(() => {
-  const token = getToken();
-  const user = getUser();
+  useEffect(() => {
+    const token = getToken();
+    const user = getUser();
 
-  if (!token) {
-    router.push("/auth/login");
-    return;
-  }
+    console.log("Citizen dashboard guard user", user, "token", token);
 
-  // If officer → go to govt dashboard
-  if (user?.role === "officer" || user?.role === "admin") {
-    router.push("/dashboard");
-  }
-}, []);
+    if (!token) {
+      router.push("/auth/login");
+      return;
+    }
+
+    if (!user?.role) {
+      console.warn("Citizen dashboard: no user role, forcing login");
+      router.push("/auth/login");
+      return;
+    }
+
+    const role = user.role?.toLowerCase?.();
+    if (role === "officer" || role === "admin") {
+      router.push("/dashboard");
+    }
+  }, [router]);
 
   useEffect(() => {
     const loadData = async () => {

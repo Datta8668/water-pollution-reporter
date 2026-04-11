@@ -1,39 +1,49 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getIncidents, getMapIncidents, updateIncidentStatus } from "@/lib/api";
 import dynamic from "next/dynamic";
 import SeverityChart from "@/components/Charts/SeverityChart";
 import TrendChart from "@/components/Charts/TrendChart";
+import { getIncidents, getMapIncidents, updateIncidentStatus } from "@/lib/api";
 import { useRouter } from "next/navigation";
 import { getUser, getToken } from "@/utils/auth";
+// const router = useRouter();
 
-
-// ✅ Fix for Leaflet (no SSR)
+// ✅ Leaflet fix
 const PollutionMap = dynamic(
   () => import("@/components/Map/PollutionMap"),
   { ssr: false }
 );
 
 export default function Dashboard() {
+  const router = useRouter(); // ✅ MUST be here
+
   const [incidents, setIncidents] = useState([]);
   const [mapData, setMapData] = useState([]);
 
-  // ✅ ADD THIS BLOCK HERE
+  // ✅ PROTECTED ROUTE
   useEffect(() => {
     const token = getToken();
     const user = getUser();
+
+    console.log("Gov dashboard guard user", user, "token", token);
 
     if (!token) {
       router.push("/auth/login");
       return;
     }
 
-    if (user?.role !== "officer" && user?.role !== "admin") {
+    if (!user?.role) {
+      console.warn("Gov dashboard: no user role, forcing login");
+      router.push("/auth/login");
+      return;
+    }
+
+    const role = user.role?.toLowerCase?.();
+    if (role !== "officer" && role !== "admin") {
       router.push("/citizen/dashboard");
     }
-  }, []);
-
+  }, [router]);
 
   // ✅ FETCH DATA
   useEffect(() => {
@@ -42,10 +52,6 @@ export default function Dashboard() {
         const data = await getIncidents();
         const map = await getMapIncidents();
 
-        console.log("All Incidents:", data);
-        console.log("Map Data:", map);
-
-        // ✅ SAFE ARRAY FIX (VERY IMPORTANT)
         const incidentsArray = Array.isArray(data)
           ? data
           : data?.data || data?.incidents || [];
@@ -56,6 +62,7 @@ export default function Dashboard() {
 
         setIncidents(incidentsArray);
         setMapData(mapArray);
+
       } catch (err) {
         console.error("Error:", err);
       }
@@ -64,10 +71,10 @@ export default function Dashboard() {
     fetchData();
   }, []);
 
-  // ✅ SAFETY (avoid filter error)
+  // ✅ SAFE ARRAY
   const safeIncidents = Array.isArray(incidents) ? incidents : [];
 
-  // ✅ STATS CALCULATION
+  // ✅ STATS
   const today = new Date().toDateString();
 
   const totalToday = safeIncidents.filter(
@@ -92,7 +99,7 @@ export default function Dashboard() {
     );
   }).length;
 
-  // ✅ STATUS UPDATE
+  // ✅ UPDATE STATUS
   const handleStatusChange = async (id) => {
     try {
       await updateIncidentStatus(id, "resolved");
@@ -106,25 +113,23 @@ export default function Dashboard() {
         : updated?.data || [];
 
       setIncidents(updatedArray);
+
     } catch (err) {
       console.error(err);
     }
   };
 
-  // ✅ UI
   return (
     <div style={{ padding: "20px" }}>
       <h1>Government Dashboard</h1>
 
-      {/* 🔷 STAT CARDS */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(4, 1fr)",
-          gap: "20px",
-          marginTop: "20px",
-        }}
-      >
+      {/* STATS */}
+      <div style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(4, 1fr)",
+        gap: "20px",
+        marginTop: "20px",
+      }}>
         <div style={{ padding: "20px", background: "#e3f2fd", borderRadius: "10px" }}>
           <h3>Today</h3>
           <h2>{totalToday}</h2>
@@ -148,32 +153,30 @@ export default function Dashboard() {
 
       <br />
 
-      {/* 🗺️ MAP */}
+      {/* MAP */}
       <h2>All Incidents Map</h2>
       <PollutionMap data={mapData} />
 
       <br />
 
-      {/* 📊 CHARTS */}
+      {/* CHARTS */}
       <h2>Analytics</h2>
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          gap: "20px",
-        }}
-      >
+      <div style={{
+        display: "grid",
+        gridTemplateColumns: "1fr 1fr",
+        gap: "20px",
+      }}>
         <SeverityChart data={safeIncidents} />
         <TrendChart data={safeIncidents} />
       </div>
 
       <br />
 
-      {/* 📋 TABLE */}
+      {/* TABLE */}
       <h2>All Incidents</h2>
 
-      <table border="1" cellPadding="10" style={{ width: "100%", marginTop: "20px" }}>
+      <table border="1" cellPadding="10" style={{ width: "100%" }}>
         <thead>
           <tr>
             <th>ID</th>

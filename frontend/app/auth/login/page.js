@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { loginUser } from "@/services/authService";
-import { saveToken, saveUser } from "@/utils/auth";
+import { getUser, saveToken, saveUser } from "@/utils/auth";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -38,8 +38,11 @@ export default function LoginPage() {
 
     toast.success("Login successful!");
 
-    // ✅ ROLE BASED REDIRECT (🔥 IMPORTANT)
-    const role = data.user?.role;
+    // read from local storage to avoid mismatch
+    const savedUser = getUser ? getUser() : null; // fallback if util is extended
+    const role = savedUser?.role || data.user?.role?.toLowerCase?.();
+
+    console.log("Login role:", role, "-- data.user:", data.user, "-- savedUser:", savedUser);
 
     if (role === "officer" || role === "admin") {
       router.push("/dashboard"); // government dashboard

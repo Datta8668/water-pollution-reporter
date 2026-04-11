@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+// import { useState } from "react";
 import { createIncident } from "../../../lib/api";
 import { useRouter } from "next/navigation";
 import { getToken } from "@/utils/auth";
+import { useState, useEffect } from "react";
+import toast from "react-hot-toast";
 
 
 export default function ReportPage() {
@@ -93,14 +95,14 @@ const handleSubmit = async (e) => {
 
     const res = await createIncident(form);
 
-    alert("Report submitted successfully!");
+    toast.success("Report submitted successfully!");
 
     // redirect
-    window.location.href = "/citizen/my-reports";
+    router.push("/citizen/my-reports");
 
   } catch (err) {
     console.error(err);
-    alert("Submission failed");
+    toast.error("Submission failed");
   }
 };
 

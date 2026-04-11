@@ -9,8 +9,34 @@ export const removeToken = () => {
 
 export const saveUser = (user) => {
   if (user) {
-    localStorage.setItem("user", JSON.stringify(user));
+    const normalizedUser = {
+      ...user,
+      role: user.role?.toLowerCase?.() || user.role,
+    };
+    localStorage.setItem("user", JSON.stringify(normalizedUser));
   }
+};
+
+export const getUser = () => {
+  if (typeof window !== "undefined") {
+    const user = localStorage.getItem("user");
+
+    if (!user || user === "undefined") {
+      return null;
+    }
+
+    try {
+      const parsed = JSON.parse(user);
+      if (parsed.role) {
+        parsed.role = parsed.role?.toLowerCase?.();
+      }
+      return parsed;
+    } catch (err) {
+      console.error("Invalid user JSON:", err);
+      return null;
+    }
+  }
+  return null;
 };
 
 export const isLoggedIn = () => {
@@ -23,25 +49,6 @@ export const isLoggedIn = () => {
 export const getToken = () => {
   if (typeof window !== "undefined") {
     return localStorage.getItem("token");
-  }
-  return null;
-};
-
-export const getUser = () => {
-  if (typeof window !== "undefined") {
-    const user = localStorage.getItem("user");
-
-    // ✅ handle null / undefined
-    if (!user || user === "undefined") {
-      return null;
-    }
-
-    try {
-      return JSON.parse(user);
-    } catch (err) {
-      console.error("Invalid user JSON:", err);
-      return null;
-    }
   }
   return null;
 };

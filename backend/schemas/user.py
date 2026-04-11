@@ -26,6 +26,12 @@ class UserOut(BaseModel):
         from_attributes = True
 
 # For JWT token
+from typing import Optional, Dict, Any
 class Token(BaseModel):
     access_token: str
     token_type: str
+    user: Optional[Dict[str, Any]] = None
+
+# Token + user (for frontend login redirect) - ensures role is sent
+class TokenWithUser(Token):
+    user: UserOut

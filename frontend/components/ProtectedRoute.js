@@ -16,10 +16,13 @@ export default function ProtectedRoute({ children, role }) {
       return;
     }
 
-    if (role && user?.role !== role) {
+    const currentRole = user?.role?.toLowerCase?.();
+    const expectedRole = role?.toLowerCase?.();
+
+    if (role && currentRole !== expectedRole) {
       router.push("/unauthorized");
     }
-  }, []);
+  }, [router, role]);
 
   return children;
 }

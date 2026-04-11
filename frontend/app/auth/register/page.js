@@ -27,7 +27,12 @@ export default function RegisterPage() {
     e.preventDefault();
 
     try {
-      await registerUser(form);
+      const normalizedForm = {
+        ...form,
+        role: form.role?.toLowerCase?.(),
+      };
+
+      await registerUser(normalizedForm);
 
       toast.success("Registration successful!");
       router.push("/auth/login");

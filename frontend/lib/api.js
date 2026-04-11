@@ -22,7 +22,7 @@ export const createIncident = async (data) => {
 
 // ✅ GET ALL INCIDENTS (optional but useful)
 export const getIncidents = async () => {
-  const res = await fetch(`${BASE_URL}/incidents`, {
+  const res = await fetch(`${BASE_URL}/incidents/`, {
     headers: getHeaders(),
   });
 

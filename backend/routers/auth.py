@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from models.database import get_db
 from models.models import User
-from schemas.user import UserCreate, UserOut, UserLogin, Token
+from schemas.user import UserCreate, UserOut, UserLogin, Token, TokenWithUser
 
 from passlib.context import CryptContext
 
@@ -80,7 +80,7 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
 
 
 # 🔹 Login API
-@router.post("/login", response_model=Token)
+@router.post("/login", response_model=TokenWithUser)
 def login(user: UserLogin, db: Session = Depends(get_db)):
 
     db_user = db.query(User).filter(User.email == user.email).first()
@@ -93,19 +93,23 @@ def login(user: UserLogin, db: Session = Depends(get_db)):
 
     token_data = {
         "user_id": db_user.id,
-       "role": db_user.role
+        "role": db_user.role
     }
 
     access_token = create_access_token(token_data)
 
     return {
-    "access_token": access_token,
-    "token_type": "bearer",
-    "user": {
-        "email": db_user.email,
-        "role": db_user.role
+        "access_token": access_token,
+        "token_type": "bearer",
+        "user": {
+            "id": db_user.id,
+            "name": db_user.name,
+            "email": db_user.email,
+            "role": db_user.role,
+            "zone_id": db_user.zone_id,
+        },
     }
-}
+
 
 
 

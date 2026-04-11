@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import IncidentCard from "@/components/Incident/IncidentCard";
 
 export default function MyReportsPage() {
   const [reports, setReports] = useState([]);
@@ -44,27 +45,9 @@ export default function MyReportsPage() {
         <p>No reports found</p>
       ) : (
         reports.map((report) => (
-          <div
-            key={report.id}
-            style={{
-              border: "1px solid gray",
-              margin: "10px 0",
-              padding: "10px",
-            }}
-          >
-            <h3>{report.title}</h3>
-            <p>{report.description}</p>
-            <p>Status: {report.status}</p>
-
-            {report.photo_url && (
-              <img
-                src={report.photo_url}
-                alt="report"
-                width="200"
-              />
-            )}
-          </div>
-        ))
+        <IncidentCard key={report.id} incident={report} />
+      ))
+      
       )}
     </div>
   );
