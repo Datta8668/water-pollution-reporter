@@ -2,10 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { getMyIncidents } from "@/lib/api";
 import { getUser, getToken } from "@/utils/auth";
-
-
+import StatCard from "@/components/StatCard";
+import IncidentCard from "@/components/Incident/IncidentCard";
+import Loader from "@/components/Loader";
 
 export default function Dashboard() {
   const [incidents, setIncidents] = useState([]);
@@ -17,15 +19,12 @@ export default function Dashboard() {
     const token = getToken();
     const user = getUser();
 
-    console.log("Citizen dashboard guard user", user, "token", token);
-
     if (!token) {
       router.push("/auth/login");
       return;
     }
 
     if (!user?.role) {
-      console.warn("Citizen dashboard: no user role, forcing login");
       router.push("/auth/login");
       return;
     }
@@ -40,8 +39,6 @@ export default function Dashboard() {
     const loadData = async () => {
       try {
         const data = await getMyIncidents();
-        console.log("API Response:", data);
-
         if (Array.isArray(data)) {
           setIncidents(data);
         }
@@ -55,68 +52,69 @@ export default function Dashboard() {
     loadData();
   }, []);
 
-  // ✅ Show loading (same on server + client → no hydration issue)
   if (loading) {
-    return <p>Loading...</p>;
+    return <Loader label="Loading your reports" />;
   }
 
   const total = incidents.length;
-  const pending = incidents.filter(i => i.status === "pending").length;
-  const resolved = incidents.filter(i => i.status === "resolved").length;
+  const pending = incidents.filter((i) => i.status === "pending").length;
+  const resolved = incidents.filter((i) => i.status === "resolved").length;
 
+  const recent = [...incidents]
+    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+    .slice(0, 4);
 
-  
   return (
-  <div style={{ padding: "20px" }}>
-    <h1>Citizen Dashboard</h1>
-
-    {/* ✅ STAT CARDS */}
-    <div style={{
-      display: "grid",
-      gridTemplateColumns: "repeat(3, 1fr)",
-      gap: "20px",
-      marginTop: "20px"
-    }}>
-      
-      <div style={{ padding: "20px", background: "#e3f2fd", borderRadius: "10px" }}>
-        <h3>Total Reports</h3>
-        <h2>{total}</h2>
+    <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <span className="font-data text-xs uppercase tracking-wide text-teal-600">Citizen dashboard</span>
+          <h1 className="mt-1 font-display text-3xl font-semibold text-ink">Your reports at a glance</h1>
+        </div>
+        <Link
+          href="/citizen/report"
+          className="rounded-full bg-teal-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-600"
+        >
+          + Report new incident
+        </Link>
       </div>
 
-      <div style={{ padding: "20px", background: "#fff3cd", borderRadius: "10px" }}>
-        <h3>Pending</h3>
-        <h2>{pending}</h2>
+      <div className="mt-8 grid gap-4 sm:grid-cols-3">
+        <StatCard label="Total reports" value={total} tone="teal" />
+        <StatCard
+          label="Pending"
+          value={pending}
+          tone="silt"
+          hint={pending > 0 ? "Awaiting review" : "All clear"}
+        />
+        <StatCard label="Resolved" value={resolved} tone="moss" />
       </div>
 
-      <div style={{ padding: "20px", background: "#d4edda", borderRadius: "10px" }}>
-        <h3>Resolved</h3>
-        <h2>{resolved}</h2>
+      <div className="mt-10 flex items-center justify-between">
+        <h2 className="font-display text-xl font-semibold text-ink">Recent reports</h2>
+        <Link href="/citizen/my-reports" className="text-sm font-semibold text-teal-700 hover:underline">
+          View all →
+        </Link>
       </div>
 
+      {recent.length === 0 ? (
+        <div className="card mt-4 flex flex-col items-center gap-2 p-10 text-center">
+          <p className="font-display text-lg font-semibold text-ink">No reports yet</p>
+          <p className="text-sm text-ink-soft">File your first report — it takes under two minutes.</p>
+          <Link
+            href="/citizen/report"
+            className="mt-3 rounded-full bg-teal-700 px-5 py-2 text-sm font-semibold text-white transition hover:bg-teal-600"
+          >
+            Report an incident
+          </Link>
+        </div>
+      ) : (
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          {recent.map((item) => (
+            <IncidentCard key={item.id} incident={item} />
+          ))}
+        </div>
+      )}
     </div>
-
-    <br />
-
-    <h2>My Reports</h2>
-
-    {incidents.length === 0 ? (
-      <p>No reports found</p>
-    ) : (
-      <ul>
-        {incidents.map((item) => (
-          <li key={item.id}>
-            <strong>{item.title}</strong> - {item.status}
-          </li>
-        ))}
-      </ul>
-    )}
-
-    <br />
-
-    <a href="/citizen/report">Report New Incident</a>
-    <br />
-    <a href="/citizen/my-reports">View My Reports</a>
-  </div>
-);
-
+  );
 }

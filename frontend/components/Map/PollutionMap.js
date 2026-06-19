@@ -1,38 +1,49 @@
 "use client";
 
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
-import L from "leaflet";
+import { MapContainer, TileLayer, CircleMarker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 
-// FIX marker icons
-delete L.Icon.Default.prototype._getIconUrl;
+const SEVERITY_COLOR = {
+  low: "#4C7A35",
+  medium: "#B3871A",
+  high: "#C1542E",
+  critical: "#8C3A1D",
+};
 
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png",
-  iconUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png",
-  shadowUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png",
-});
+export default function PollutionMap({ data = [], center, zoom = 12, height = "420px" }) {
+  const valid = (data || []).filter((d) => d.latitude && d.longitude);
+  const mapCenter = center || (valid[0] ? [valid[0].latitude, valid[0].longitude] : [18.5204, 73.8567]);
 
-
-export default function PollutionMap({ data }) {
   return (
-    <MapContainer
-      center={[18.5204, 73.8567]} // Pune default
-      zoom={12}
-      style={{ height: "400px", width: "100%" }}
-    >
+    <MapContainer center={mapCenter} zoom={zoom} style={{ height, width: "100%" }}>
       <TileLayer
-        attribution="&copy; OpenStreetMap"
+        attribution="&copy; OpenStreetMap contributors"
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
-
-      {data.map((item) => (
-        <Marker key={item.id} position={[item.latitude, item.longitude]}>
+      {valid.map((item) => (
+        <CircleMarker
+          key={item.id}
+          center={[item.latitude, item.longitude]}
+          radius={9}
+          pathOptions={{
+            color: SEVERITY_COLOR[item.severity] || "#1C8C92",
+            fillColor: SEVERITY_COLOR[item.severity] || "#1C8C92",
+            fillOpacity: 0.75,
+            weight: 2,
+          }}
+        >
           <Popup>
-            <strong>{item.title}</strong> <br />
-            {item.status}
+            <div style={{ minWidth: "160px" }}>
+              <p style={{ fontWeight: 600, color: "#0B2B2E", margin: 0 }}>{item.title || "Incident"}</p>
+              <p style={{ marginTop: 4, fontSize: 12, color: "#3C5457", textTransform: "capitalize" }}>
+                {item.pollution_type ? item.pollution_type.replace("_", " ") : "unknown"} · {item.severity}
+              </p>
+              <p style={{ marginTop: 4, fontSize: 12, fontWeight: 600, color: "#0E5C63", textTransform: "capitalize" }}>
+                {item.status}
+              </p>
+            </div>
           </Popup>
-        </Marker>
+        </CircleMarker>
       ))}
     </MapContainer>
   );

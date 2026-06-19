@@ -1,27 +1,28 @@
 "use client";
 
-import { LineChart, Line, XAxis, YAxis, Tooltip } from "recharts";
+import { LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer } from "recharts";
 
-export default function TrendChart({ data }) {
-  const last7Days = [...Array(7)].map((_, i) => {
+export default function TrendChart({ data = [] }) {
+  const days = [...Array(7)].map((_, i) => {
     const d = new Date();
-    d.setDate(d.getDate() - i);
-    return d.toDateString();
+    d.setDate(d.getDate() - (6 - i));
+    return d;
   });
 
-  const chartData = last7Days.map((day) => ({
-    date: day,
-    count: data.filter(
-      (i) => new Date(i.created_at).toDateString() === day
-    ).length,
+  const chartData = days.map((d) => ({
+    date: d.toLocaleDateString("en-IN", { day: "numeric", month: "short" }),
+    count: data.filter((i) => i.created_at && new Date(i.created_at).toDateString() === d.toDateString()).length,
   }));
 
   return (
-    <LineChart width={400} height={300} data={chartData}>
-      <XAxis dataKey="date" />
-      <YAxis />
-      <Tooltip />
-      <Line type="monotone" dataKey="count" />
-    </LineChart>
+    <ResponsiveContainer width="100%" height={260}>
+      <LineChart data={chartData} margin={{ top: 10, right: 10, left: -16, bottom: 0 }}>
+        <CartesianGrid stroke="#DCE6E4" strokeDasharray="3 3" vertical={false} />
+        <XAxis dataKey="date" tick={{ fontSize: 11 }} stroke="#3C5457" />
+        <YAxis allowDecimals={false} tick={{ fontSize: 11 }} stroke="#3C5457" />
+        <Tooltip />
+        <Line type="monotone" dataKey="count" stroke="#0E5C63" strokeWidth={2.5} dot={{ r: 3 }} />
+      </LineChart>
+    </ResponsiveContainer>
   );
 }
